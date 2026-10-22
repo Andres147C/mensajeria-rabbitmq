@@ -46,7 +46,7 @@ Aplicación web de mensajería que **envía correos reales** por SMTP de Gmail y
 1. **Envío.** El usuario redacta un correo en la web. La API valida el DTO, lo guarda en SQLite con estado `en_cola`, lo publica en el exchange `correos` con routing key `salida` y responde de inmediato (HTTP 202).
 2. El **consumidor de envío** (workers) toma el mensaje de `correos.salida`, lo envía por SMTP de Gmail y actualiza el estado a `enviado`.
 3. Si el envío falla, **lo reintenta hasta 3 veces** (con esperas de 2, 4 y 6 s). Si después de eso sigue fallando, marca el correo como `error` y hace `nack` sin reencolar. RabbitMQ lo manda entonces a la *dead letter queue* `correos.fallidos`.
-4. **Recepción.** Cada 30 segundos el **lector IMAP** revisa la bandeja INBOX de Gmail, toma los correos no leídos, los publica en `correos.entrada` y los marca como leídos.
+4. **Recepción.** Cada 30 segundos el **lector IMAP** revisa la bandeja INBOX de Gmail, toma los correos no leídos **que llegaron después de iniciar los workers**, los publica en `correos.entrada` y los marca como leídos. Los no leídos que ya estaban en la bandeja no se tocan.
 5. El **consumidor de entrada** guarda cada correo en SQLite. Si un `Message-ID` ya existe, no lo vuelve a guardar.
 6. El frontend consulta `/api/bandeja` y `/api/enviados` cada 5 segundos.
 
@@ -90,7 +90,7 @@ Todos los mensajes se publican con `persistent: true` y se confirman manualmente
 
 - **Node.js 20 o superior** (probado con Node 24) y npm.
 - **Docker Desktop** para ejecutar RabbitMQ: <https://www.docker.com/products/docker-desktop/>.
-- Una **cuenta de Gmail** con verificación en dos pasos activada. Es mejor usar una cuenta solo para pruebas, porque el lector IMAP marca como leídos los correos que procesa.
+- Una **cuenta de Gmail** con verificación en dos pasos activada. Puedes usar tu cuenta personal: el lector solo procesa (y marca como leídos) los correos que lleguen después de iniciar los workers.
 
 ---
 
@@ -126,7 +126,7 @@ cp .env.example .env
 | `REMITENTE_NOMBRE` | Nombre que ve el destinatario | `Mensajería RabbitMQ` |
 | `SMTP_HOST` / `SMTP_PORT` | Servidor SMTP | `smtp.gmail.com` / `465` |
 | `IMAP_HOST` / `IMAP_PORT` | Servidor IMAP | `imap.gmail.com` / `993` |
-| `IMAP_MAX_POR_CICLO` | Máximo de no leídos procesados cada 30 s | `20` |
+| `IMAP_MAX_POR_CICLO` | Máximo de correos nuevos procesados cada 30 s | `20` |
 | `RABBITMQ_URL` | Conexión AMQP | `amqp://guest:guest@localhost:5672` |
 | `API_PORT` | Puerto de la API | `3001` |
 | `FRONTEND_URL` | Origen permitido por CORS | `http://localhost:3000` |
@@ -234,7 +234,7 @@ npm start
 1. Desde cualquier otra cuenta envía un correo a la dirección configurada en `GMAIL_USER`.
 2. En menos de 30 segundos los workers mostrarán:
    ```
-   [LectorIMAP] [IMAP] 1 correo(s) no leído(s); procesando 1
+   [LectorIMAP] [IMAP] 1 correo(s) nuevo(s) sin leer; procesando 1
    [LectorIMAP] [PUBLICADO] Correo de Juan <juan@x.com> "Hola" → routing key "entrada"
    [LectorIMAP] [IMAP] 1 correo(s) marcado(s) como leído(s) en Gmail
    [ConsumidorEntrada] [CONSUMIDO] "Hola" de Juan <juan@x.com> desde "correos.entrada"
@@ -242,7 +242,7 @@ npm start
    ```
 3. Abre <http://localhost:3000/bandeja>. El correo aparece solo, sin recargar la página. Haz clic para ver el detalle.
 
-> La primera revisión IMAP toma hasta `IMAP_MAX_POR_CICLO` correos no leídos que ya estén en la bandeja (los más recientes). Por eso se recomienda una cuenta de pruebas.
+> El lector solo procesa correos que lleguen **después** de iniciar los workers. Los que llegaron antes, o mientras los workers estaban detenidos, se ignoran aunque estén sin leer.
 
 ### API con curl
 
@@ -287,4 +287,4 @@ curl http://localhost:3001/api/bandeja
 | `Connection Failed: Unable to establish a connection to the broker` en consola | Mismo caso: RabbitMQ está apagado. La api y los workers se reconectan solos cuando vuelve. |
 | `PRECONDITION_FAILED - inequivalent arg 'x-dead-letter-exchange'` | La cola ya existía con otros argumentos. Bórrala desde el panel o ejecuta `docker compose down -v`. |
 | La web muestra "No se pudo conectar con la API" | La API no está corriendo o `NEXT_PUBLIC_API_URL` está mal. Reinicia `npm run dev` después de cambiar `.env.local`. |
-| No llegan correos a la bandeja | Revisa que los workers estén corriendo y que IMAP esté habilitado en Gmail. El lector solo toma correos **no leídos** de INBOX. |
+| No llegan correos a la bandeja | Revisa que los workers estén corriendo y que IMAP esté habilitado en Gmail. El lector solo toma correos **no leídos** de INBOX que llegaron **después** de iniciar los workers. |
