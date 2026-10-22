@@ -1,0 +1,28 @@
+# Dependencias
+node_modules/
+
+# Compilados
+dist/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# Variables de entorno (contienen credenciales)
+.env
+.env.local
+.env.*.local
+
+# Base de datos SQLite
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+*.db
+backend/data/
+
+# Logs y sistema
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db

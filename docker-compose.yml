@@ -1,0 +1,18 @@
+# RabbitMQ con el panel de administración web.
+# Panel: http://localhost:15672  (usuario: guest / contraseña: guest)
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq-correos
+    ports:
+      - "5672:5672"   # Puerto AMQP (lo usan la api y los workers)
+      - "15672:15672" # Panel de administración web
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    restart: unless-stopped
+
+volumes:
+  rabbitmq_data:

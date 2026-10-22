@@ -1,0 +1,13 @@
+{
+  "name": "mensajeria-rabbitmq",
+  "private": true,
+  "description": "Atajos para ejecutar cada parte del proyecto desde la raíz (cada uno en su propia terminal)",
+  "scripts": {
+    "instalar": "npm install --prefix backend && npm install --prefix frontend",
+    "rabbitmq": "docker compose up -d",
+    "api": "npm run dev:api --prefix backend",
+    "workers": "npm run dev:workers --prefix backend",
+    "frontend": "npm run dev --prefix frontend",
+    "build": "npm run build --prefix backend && npm run build --prefix frontend"
+  }
+}

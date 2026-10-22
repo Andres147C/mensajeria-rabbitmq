@@ -1,0 +1,46 @@
+{
+  "name": "mensajeria-backend",
+  "version": "1.0.0",
+  "description": "Monorepo NestJS: API REST + workers (SMTP, IMAP) comunicados por RabbitMQ",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "nest build api && nest build workers",
+    "build:api": "nest build api",
+    "build:workers": "nest build workers",
+    "start:api": "nest start api",
+    "start:workers": "nest start workers",
+    "dev:api": "nest start api --watch",
+    "dev:workers": "nest start workers --watch",
+    "prod:api": "node dist/apps/api/apps/api/src/main",
+    "prod:workers": "node dist/apps/workers/apps/workers/src/main"
+  },
+  "dependencies": {
+    "@golevelup/nestjs-rabbitmq": "^9.1.0",
+    "@nestjs/common": "^12.2.0",
+    "@nestjs/config": "^12.0.1",
+    "@nestjs/core": "^12.2.0",
+    "@nestjs/platform-express": "^12.2.0",
+    "@nestjs/schedule": "^12.0.2",
+    "@nestjs/typeorm": "^12.0.2",
+    "better-sqlite3": "^12.11.1",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
+    "imapflow": "^2.8.0",
+    "mailparser": "^3.12.2",
+    "nodemailer": "^10.2.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "typeorm": "^1.1.2"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^12.0.10",
+    "@nestjs/schematics": "^12.0.10",
+    "@types/amqplib": "^0.10.8",
+    "@types/express": "^5.0.6",
+    "@types/mailparser": "^3.9.0",
+    "@types/node": "^26.6.5",
+    "@types/nodemailer": "^8.0.2",
+    "typescript": "^6.0.3"
+  }
+}
